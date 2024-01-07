@@ -1,0 +1,82 @@
+useDynLib( BDgraph, .registration = TRUE )
+
+importFrom( "stats", "dnorm" )
+
+export( bdgraph,
+		bdgraph.mpl,
+		bdgraph.dw,
+		bdw.reg,
+
+		transfer,
+		plinks,
+		bf,
+		precision,
+		covariance,
+		select,
+		pgraph,
+		graph.sim,
+		adj2link,
+		link2adj,
+		sparsity,
+		bdgraph.sim,
+		bdgraph.npn,
+		compare,
+
+		plotcoda,
+		traceplot,
+		plotroc,
+		roc,
+		auc,
+		conf.mat,
+		conf.mat.plot,
+		
+		rgwish,
+		rwish,
+		gnorm,
+		rmvnorm,
+		
+		ddweibull,
+		pdweibull,
+		qdweibull,
+		rdweibull,
+		
+		summary.bdgraph,
+		plot.bdgraph, 
+		print.bdgraph, 
+		predict.bdgraph,
+		
+		posterior.predict,
+
+		plot.graph, 
+
+		plot.sim,
+		print.sim, 
+		
+		detect_cores,
+		get_graph,
+		get_g_prior,
+		get_g_start,
+		get_K_start,
+		get_S_n_p,
+		get_cores,
+		
+		get_bounds_dw,
+		ddweibull_reg,
+		log_post_cond_dw,
+		near_positive_definite,
+		
+		get_Ds_tgm_R,
+		get_Ts_R,
+		update_tu_R,
+		update_mu_R
+	   )
+
+S3method( "summary", "bdgraph" )
+S3method( "plot"   , "bdgraph" )
+S3method( "print"  , "bdgraph" )
+S3method( "predict", "bdgraph" )
+
+S3method( "plot" , "sim" )
+S3method( "print", "sim" )
+
+S3method( "plot", "graph" )
