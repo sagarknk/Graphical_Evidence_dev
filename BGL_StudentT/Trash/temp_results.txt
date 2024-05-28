@@ -1,0 +1,5 @@
+q=50, n = 100, lambda = 10, burnin =1e3, nmc = 5e3
+Harmonic: -7921.012 (8.88)
+Ours: -8592.23 (75.95)
+
+
