@@ -2,9 +2,9 @@
 %%%% which is 'q' here
 
 rng(123456789)
-q = 5; %% This is 'p' in the paper
-n = 10;
-lambda = 1;
+q = 10; %% This is 'p' in the paper
+n = 20;
+lambda = 1/2;
 t_dof = 1e4;
 
 %%% In the codes, we use the hirearchy \omega_{ij} ~ N(0,\tau_{ij}^2/\lambda^2)
@@ -28,6 +28,10 @@ csvwrite(['./True_Omega_mat/True_Omega_mat_q_',num2str(q),'_n_',num2str(n),'_lam
 
 %%% Generating a nxq data matrix from N(0, \Sigma = inv(True_Omega))
 xx= mvnrnd(zeros(1,q),inv(True_Omega),n);
+rand_chisq = chi2rnd(t_dof);
+xx = sqrt(t_dof/rand_chisq).*xx;
+
+%%% Computing the sample covariance matrix
 S = xx'*xx;
 
 %%% Storing the generated matrices
