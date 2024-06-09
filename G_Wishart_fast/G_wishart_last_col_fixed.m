@@ -229,8 +229,12 @@ for iter = 1:(burnin + nmc)
     else
         s_22 = S_reduced(1,1);
         V_mat_22 = scale_matrix_required(1,1);
-        gamma_param =  gamrnd(delta + n/2 + 1, 2/(s_22+V_mat_22)); %% Variable name change 
+        gamma_param =  gamrnd(delta + n/2 + 1, 2/(s_22+V_mat_22)); %% Variable name change
         Omega_reduced = gamma_param + fixed_last_col'*inv(omega_pp)*fixed_last_col;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        Sigma = inv([Omega_reduced, fixed_last_col;fixed_last_col, omega_pp]);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

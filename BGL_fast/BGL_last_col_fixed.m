@@ -180,6 +180,10 @@ for iter = 1:(burnin + nmc)
         s_22 = S_reduced(1,1);
         gamma_param =  gamrnd(n/2 + 1, 2/(s_22+lambda));
         Omega_reduced = gamma_param + fixed_last_col'*(1/omega_pp)*fixed_last_col;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        Sigma = inv([Omega_reduced, fixed_last_col;fixed_last_col, omega_pp]);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
 
 
@@ -223,7 +227,7 @@ for sample_index = 1:nmc
         inv_Omega_11 = inv_omega_11_save(1, sample_index);
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     temp_gamma_val = post_mean_omega_22_2ndGibbs  - ...
         fixed_last_col'*inv_Omega_11*fixed_last_col;
 

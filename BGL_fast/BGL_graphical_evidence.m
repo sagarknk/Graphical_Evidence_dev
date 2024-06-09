@@ -2,9 +2,9 @@
 %%%% which is 'q' here
 
 rng(123456789)
-q = 10; %% This is 'p' in the paper
-n = 20;
-lambda = 2;
+q = 5; %% This is 'p' in the paper
+n = 10;
+lambda = 1;
 
 %%%% For setting the True_Omega, we run the prior sample 6e3 times with a
 %%%% burnin of 1e3 samples and then select the last sample the True_Omega
@@ -73,12 +73,12 @@ direct_eval_log_prior_density = zeros(1,1);
 burnin = 1e3; %%% burn-in for MCMC iterations
 nmc = 5e3; %%% number of MC iterations after burn-in
 
-%%% Noting the start time 
+%%% Noting the start time
 tStart = tic;
 
 %%% We do a try-catch because, computing log-marginal -> log f(y_{1:p})
 %%% kind of depends on the order of columns in xx (when 'p' is large). Hence having a try-catch
-%%% becomes necessary 
+%%% becomes necessary
 
 try
 
@@ -87,7 +87,7 @@ try
     %%% j from 1 to p.
 
     Matrix_to_be_added = zeros(q,q);
-    %%%% The above matrix keeps track of the linear shifts 
+    %%%% The above matrix keeps track of the linear shifts
     %%%% Needs to be updated every step
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -100,7 +100,7 @@ try
             %%% for every iteration we need smaller and smaller blocks of
             %%% the data matrix xx. When num_BGL =1, we need the entire
             %%% matrix xx. When num_BGL = 2, we need the (p-1) x (p-1)
-            %%% block of the matrix xx. And so on ... 
+            %%% block of the matrix xx. And so on ...
 
             reduced_data_xx = xx(:,1:(q-num_BGL+1));
 
@@ -112,24 +112,24 @@ try
 
             Matrix_2be_added_Gibbs = ...
                 Matrix_to_be_added(1:q_reduced, 1:q_reduced);
-            
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             %%% Run the unrestricted sampler to get samples, which will
             %%% be used to approximate the Normal density in the
             %%% evaluation of the term IV_{p-j+1} - Equation (9)
-            
+
             %%% The function below (BGL_Hao_wang) needs to be translated to C/C++
             %%% The first 2 return values are matrices and the last return
             %%% value is a scalar
 
             [post_mean_omega,post_mean_tau_save, MC_average_Equation_9] = ...
                 BGL_Hao_wang(S_reduced,n,burnin,nmc,lambda, Matrix_2be_added_Gibbs);
-            
+
             %%% The function above (BGL_Hao_wang) calls the function
             %%% 'gigrnd' to sample from generalized inverse Gaussian. As
-            %%% BGL_Hao_wang should be translated to C/C++, gigrnd should also be translated 
-            
+            %%% BGL_Hao_wang should be translated to C/C++, gigrnd should also be translated
+
             fixed_last_col = post_mean_omega(1:(q_reduced-1),q_reduced);
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -272,10 +272,14 @@ our_time = toc(tStart);
 
 if q ==2
     log_marginal %#ok<NOPTS>
+    Final_estimate_log_marginal = sum(log_ratio_of_liklelihoods,2) +  direct_eval_log_prior_density %#ok<NOPTS>
+    %%% Above is the log marginal log f(y_{1:p}) - Equation (4)
+
+    our_time %#ok<NOPTS>
     %%% prints the closed form of log-marginal (Proposition 2 in the paper)
 else
     Final_estimate_log_marginal = sum(log_ratio_of_liklelihoods,2) +  direct_eval_log_prior_density %#ok<NOPTS>
-    %%% Above is the log marginal log f(y_{1:p}) - Equation (4) 
+    %%% Above is the log marginal log f(y_{1:p}) - Equation (4)
 
     our_time %#ok<NOPTS>
 end

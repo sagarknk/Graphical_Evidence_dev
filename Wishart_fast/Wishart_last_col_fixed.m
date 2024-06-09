@@ -1,14 +1,15 @@
 function [post_mean_omega_22_2ndGibbs, MC_average_Equation_11] = ...
-    GHS_last_col_fixed(S,n,burnin,nmc,lambda,fixed_last_col,...
-    Matrix_2be_added_Gibbs, post_mean_omega, post_mean_tau_sq_save)
+    Wishart_last_col_fixed(S,n,burnin,nmc,dof,fixed_last_col)
 
 %%% S: Sample covariance matrix
 %%% n: sample size
 %%% burnin: burn-in for MCMC
 %%% nmc: number of samples to be saved after burn-in
+%%% dof: degree of freedom of wishart (alpha in the main code)
 %%% fixed_last_col: \omega_12^*
 
 [p] = size(S,1);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if p-1~=1
@@ -24,7 +25,6 @@ omega_save_pp = zeros(1,nmc);
 
 S_reduced = S(1:(p-1), 1:(p-1));
 p_reduced = p-1;
-Matrix_2be_added_Gibbs_reduced = Matrix_2be_added_Gibbs(1:p_reduced, 1:p_reduced);
 
 %%%% ind_noi_all stores the indicices {1,2,...p}\{i} for the i^th column
 
@@ -45,13 +45,11 @@ else
     % do nothing
 end
 
-TAU_sq_reduced(1:p_reduced, 1:p_reduced) = ...
-    post_mean_tau_sq_save(1:p_reduced, 1:p_reduced);
-Nu_reduced(1:p_reduced,1:p_reduced) = 1;
+%Omega_reduced = eye(p_reduced);
 omega_pp = [];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%
-Sigma = inv(post_mean_omega);
+Sigma = eye(p);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -69,10 +67,10 @@ for iter = 1:(burnin + nmc)
     s_22 = S(p,p);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
     %%%%% sample omega_22 %%%%%%%%%%%%%
-    gamma_param = gamrnd(n/2 + 1,2/(s_22+1/lambda));
-    % Sampling from the Gamma density of Equation (16) in the paper
+    gamma_param = gamrnd((dof + n -p +1)/2,2/(s_22+1)); %% Variable name change
+    % Sampling from the Gamma density of Equation (10) in the paper
+
     omega_pp =  gamma_param + ...
         fixed_last_col'*inv_Omega_11*fixed_last_col ;
 
@@ -90,12 +88,12 @@ for iter = 1:(burnin + nmc)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    if p_reduced~=1
+
+    if p_reduced ~=1
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        temp_matrix_2be_added = (1/omega_pp)*(fixed_last_col*fixed_last_col');
         Sigma_reduced = Sigma_11;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -104,12 +102,7 @@ for iter = 1:(burnin + nmc)
 
             ind_noi = ind_noi_all(:,i);
             s_21_tilda = S_reduced(ind_noi,i); s_22_tilda = S_reduced(i,i);
-            vec_2be_added_21 = Matrix_2be_added_Gibbs_reduced(ind_noi,i);
-
-            temp_vec_2be_added_21 = temp_matrix_2be_added(ind_noi,i);
-            tau_sq_12  = TAU_sq_reduced(ind_noi,i);
-            nu_12 = Nu_reduced(ind_noi,i);
-            gamma_param_tilda = gamrnd(n/2 + 1, 2/(s_22_tilda+1/lambda));
+            gamma_param_tilda = gamrnd((dof + n -p +1)/2, 2/(s_22_tilda+1));
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -118,25 +111,13 @@ for iter = 1:(burnin + nmc)
             sigma_22_reduced = Sigma_reduced(i,i);
 
             inv_Omega_11 = Sigma_11_reduced - sigma_12_reduced*sigma_12_reduced'/sigma_22_reduced;
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            inv_C = diag(1./(tau_sq_12*lambda*lambda)) + (s_22_tilda + 1/lambda)*inv_Omega_11;
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-            mu_i = -inv_C\(s_21_tilda + vec_2be_added_21./(tau_sq_12*lambda*lambda) ...
-                + temp_vec_2be_added_21./(tau_sq_12*lambda*lambda));
-
+            inv_C = (s_22_tilda+1)*inv_Omega_11;
+            mu_i = -inv_C\s_21_tilda;
             inv_C_chol = chol(inv_C);
             beta = mu_i+ inv_C_chol\randn(p_reduced-1,1);
-            % Sampling from the Normal density of Equation (16) in the paper
-
-            omega_12 = beta;
-
-            %%% sample tau_sq and nu
-            rate = omega_12.^2/(2*lambda^2)+1./nu_12;
-            tau_sq_12 = 1./gamrnd(1,1./rate);    % random inv gamma with shape=1, rate=rate
-            nu_12 = 1./gamrnd(1,1./(1+1./tau_sq_12));    % random inv gamma with shape=1, rate=1+1/lambda_sq_12
-            TAU_sq_reduced(i,ind_noi) = tau_sq_12; TAU_sq_reduced(ind_noi,i) = tau_sq_12;
-            Nu_reduced(i,ind_noi) = nu_12; Nu_reduced(ind_noi,i) = nu_12;
+            % Sampling from the Normal density of Equation (10) in the paper
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -163,9 +144,10 @@ for iter = 1:(burnin + nmc)
         Sigma(p,[1:p_reduced]') = sigma_12;
         Sigma([1:p_reduced]',p)= sigma_12;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     else
         s_22 = S_reduced(1,1);
-        gamma_param =  gamrnd(n/2 + 1, 2/(s_22+1/lambda));
+        gamma_param =  gamrnd((dof + n -p +1)/2, 2/(s_22+1));
         Omega_reduced = gamma_param + fixed_last_col'*(1/omega_pp)*fixed_last_col;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -189,18 +171,18 @@ for iter = 1:(burnin + nmc)
 
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% ADDED NEW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 post_mean_omega_22_2ndGibbs = mean(omega_save_pp);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 vec_log_gamma_density = ones(1,nmc);
 vec_log_gamma_density = -Inf.*vec_log_gamma_density;
 
 %%% We are starting with a vector of -Infinity because if the
-%%% indicator condition is not met, then the likelihood iz zero,
+%%% indicator condition is not met, then the likelihood is zero,
 %%% and the log-likelihood is -Infinity
+
 
 for sample_index = 1:nmc
 
@@ -219,8 +201,8 @@ for sample_index = 1:nmc
     if(temp_gamma_val > 0)
         vec_log_gamma_density(1, sample_index) = ...
             log(gampdf(temp_gamma_val,...
-            n/2 + 1 , ...
-            2/(S(p,p)+1/lambda)));
+            (dof +  n - p+1)/2 , ...
+            2/(S(p,p)+1)));
     else
         % do nothing
     end

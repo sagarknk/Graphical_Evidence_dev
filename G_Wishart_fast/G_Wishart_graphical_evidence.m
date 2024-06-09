@@ -2,9 +2,9 @@
 %%%% which is 'q' here
 
 rng(123456789)
-q = 15; %% This is 'p' in the paper
+q = 5; %% This is 'p' in the paper
 n = 2*q;
-delta = 5; %%% in paper delta is alpha
+delta = 2; %%% in paper delta is alpha
 is_banded = false;
 
 if is_banded
